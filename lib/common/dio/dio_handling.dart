@@ -2,17 +2,18 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../storage/storage_type.dart';
+import '../auth/auth_model.dart';
+import '../auth/auth_provider.dart';
+import 'dio_base.dart';
 
 class CustomInterceptors extends InterceptorsWrapper {
-  final FlutterSecureStorage storage;
   final Ref ref;
+  final auth;
 
   CustomInterceptors({
-    required this.storage,
     required this.ref,
+    required this.auth,
   });
 
   @override
@@ -21,10 +22,9 @@ class CustomInterceptors extends InterceptorsWrapper {
     RequestInterceptorHandler handler,
   ) async {
     log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
-    final accessToken = await storage.read(key: AuthToken.accessToken.name);
 
-    if (accessToken != null) {
-      options.headers['Authorization'] = 'Bearer $accessToken';
+    if (auth != null) {
+      options.headers['Authorization'] = 'Bearer ${auth.accessToken}';
     }
 
     return super.onRequest(options, handler);
@@ -46,24 +46,35 @@ class CustomInterceptors extends InterceptorsWrapper {
   ) async {
     log('[ERR] [${err.requestOptions.method}] ${err.requestOptions.uri} ${err.response?.statusCode} ${err.requestOptions.data} ${err.response?.data}');
 
-    if (err.response?.statusCode == 401) {
+    final isAuthError = err.response?.statusCode == 401;
+    final isAuthPath = err.requestOptions.path == '/auth/login/refresh' ||
+        err.requestOptions.path == '/auth/login/kakao';
+    if (isAuthError && !isAuthPath) {
       try {
-        final refreshToken =
-            await storage.read(key: AuthToken.refreshToken.name);
-        await storage.delete(key: AuthToken.accessToken.name);
-
-        // no refresh token
-        if (refreshToken == null) {
-          // 에러를 던질때는 handler.reject를 사용한다.
+        if (auth == null) {
           return handler.reject(err);
         }
-        // refresh token이 있을 경우, 새로운 access token을 요청한다.
-        // 요청이 안되면 에러를 던진다.
 
-        return handler.reject(err);
+        // refresh token이 있을 경우, 새로운 access token을 요청한다.
+        Dio retryDio = Dio(dioOptions);
+        final respToken = await retryDio.post('/auth/login/refresh', data: {
+          'refresh_token': auth.refreshToken,
+        });
+        if (respToken.data['access_token'] == null ||
+            respToken.data['refresh_token'] == null) {
+          throw Exception('토큰이 없습니다.');
+        }
+        final freshToken = Auth.fromJson(respToken.data);
+        ref.read(authControllerProvider.notifier).authorize(freshToken);
+        final options = err.requestOptions;
+        options.headers.addAll({'Authorization': freshToken.accessToken});
+
+        //재요청
+        final response = await retryDio.fetch(options);
+        return handler.resolve(response);
       } catch (e) {
         try {
-          await storage.deleteAll();
+          ref.read(authControllerProvider.notifier).unAuthorize();
         } catch (e) {
           log('Failed to delete all storage');
         }

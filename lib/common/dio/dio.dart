@@ -1,16 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:watso_v2/common/auth/auth_provider.dart';
 import 'package:watso_v2/common/dio/dio_base.dart';
 
-import '../storage/storage_provider.dart';
 import 'dio_handling.dart';
 
 part 'dio.g.dart';
 
-@riverpod
-Dio dio(ProviderRef ref) {
+@Riverpod(keepAlive: true)
+Dio dio(DioRef ref) {
   final dio = Dio(dioOptions);
-  final storage = ref.read(flutterSecureStorageProvider);
-  dio.interceptors.add(CustomInterceptors(ref: ref, storage: storage));
+  final auth = ref.watch(authControllerProvider);
+  dio.interceptors.add(CustomInterceptors(ref: ref, auth: auth));
   return dio;
 }
