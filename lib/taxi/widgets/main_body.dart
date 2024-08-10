@@ -110,9 +110,15 @@ class MainBody extends ConsumerWidget {
             ],
           );
         }, error: (err, stack) {
-          return Text("에러가 발생했습니다.");
+          return AngularBox(
+              margin: EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Text("에러가 발생했습니다"));
         }, loading: () {
-          return CircularProgressIndicator();
+          return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(),
+          );
         }),
       ],
     );

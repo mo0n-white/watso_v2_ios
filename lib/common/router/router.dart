@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:watso_v2/common/router/routes.dart';
-import 'package:watso_v2/common/widgets/Layout.dart';
 
 import '../auth/auth_model.dart';
 import '../auth/auth_provider.dart';
+import '../widgets/Layout.dart';
 
 part 'router.g.dart';
 
@@ -66,31 +66,38 @@ final List<RouteBase> _routes = [
   ),
   ShellRoute(
       navigatorKey: _shellNavigatorKey,
-      builder: (BuildContext context, GoRouterState state, child) {
-        return PageLayout(
+      pageBuilder: (context, state, child) {
+        return NoTransitionPage(
+            child: PageLayout(
           body: child,
           location: state.fullPath ?? Routes.tMain.path,
-        );
+        ));
       },
+      // builder: (BuildContext context, GoRouterState state, child) {
+      //   return PageLayout(
+      //     body: child,
+      //     location: state.fullPath ?? Routes.tMain.path,
+      //   );
+      // },
       routes: [
         GoRoute(
           path: Routes.tMain.path,
           parentNavigatorKey: _shellNavigatorKey,
-          builder: (BuildContext context, GoRouterState state) {
-            return Routes.tMain.screen;
+          pageBuilder: (BuildContext context, GoRouterState state) {
+            return NoTransitionPage(child: Routes.tMain.screen);
           },
         ),
         GoRoute(
             path: Routes.tMessaging.path,
             parentNavigatorKey: _shellNavigatorKey,
-            builder: (BuildContext context, GoRouterState state) {
-              return Routes.tMessaging.screen;
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              return NoTransitionPage(child: Routes.tMessaging.screen);
             }),
         GoRoute(
             path: Routes.tHistory.path,
             parentNavigatorKey: _shellNavigatorKey,
-            builder: (BuildContext context, GoRouterState state) {
-              return Routes.tHistory.screen;
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              return NoTransitionPage(child: Routes.tHistory.screen);
             }),
       ]),
   GoRoute(

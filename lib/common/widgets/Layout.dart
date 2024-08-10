@@ -6,7 +6,7 @@ import '../../taxi/widgets/main_floating_btn.dart';
 import '../constants/styles.dart';
 import '../router/routes.dart';
 
-class PageLayout extends StatefulWidget {
+class PageLayout extends StatelessWidget {
   const PageLayout({
     super.key,
     required this.body,
@@ -16,13 +16,8 @@ class PageLayout extends StatefulWidget {
   final Widget body;
   final String location;
 
-  @override
-  State<PageLayout> createState() => _PageLayoutState();
-}
-
-class _PageLayoutState extends State<PageLayout> {
   _location() {
-    String path = widget.location;
+    String path = location;
     if (path == Routes.tMain.path) return 0;
     if (path == Routes.tMessaging.path) return 1;
     if (path == Routes.tHistory.path) return 2;
@@ -94,69 +89,60 @@ class _PageLayoutState extends State<PageLayout> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: widget.body,
+          child: body,
         ),
       ]),
-
-      // SingleChildScrollView(
-      //   child: Padding(
-      //     padding: const EdgeInsets.symmetric(horizontal: 20),
-      //     child: widget.body,
-      //   ),
-      // ),
-      bottomNavigationBar: SizedBox(
-        height: 100,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            InkWell(
-              onTap: () {
-                context.go(Routes.tMain.path);
-              },
-              child: Container(
-                height: 32,
-                width: 32,
-                padding: const EdgeInsets.all(2),
-                child: SvgPicture.asset(
-                  'assets/icons/home.svg',
-                  fit: BoxFit.fill,
-                  colorFilter: ColorFilter.mode(
-                    _location() == 0 ? WatsoColor.primary : Colors.grey,
-                    BlendMode.srcIn,
-                  ),
-                ),
+      bottomNavigationBar: BottomNavigationBar(
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        selectedItemColor: WatsoColor.primary,
+        onTap: (index) {
+          if (index == 0) {
+            context.go(Routes.tMain.path);
+          } else if (index == 1) {
+            context.go(Routes.tMessaging.path);
+          } else if (index == 2) {
+            context.go(Routes.tHistory.path);
+          }
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/icons/home.svg',
+              width: 24,
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _location() == 0 ? WatsoColor.primary : Colors.black12,
+                BlendMode.srcIn,
               ),
             ),
-            InkWell(
-              onTap: () {
-                context.go(Routes.tMessaging.path);
-              },
-              child: SvgPicture.asset(
-                'assets/icons/bigtalk.svg',
-                height: 32,
-                width: 32,
-                colorFilter: ColorFilter.mode(
-                  _location() == 1 ? WatsoColor.primary : Colors.grey,
-                  BlendMode.srcIn,
-                ),
+            label: "홈",
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/icons/bigtalk.svg',
+              height: 32,
+              width: 32,
+              colorFilter: ColorFilter.mode(
+                _location() == 1 ? WatsoColor.primary : Colors.black12,
+                BlendMode.srcIn,
               ),
             ),
-            InkWell(
-              onTap: () {
-                context.go(Routes.tHistory.path);
-              },
-              child: SvgPicture.asset(
-                'assets/icons/profile.svg',
-                height: 32,
-                width: 32,
-                colorFilter: ColorFilter.mode(
-                  _location() == 2 ? WatsoColor.primary : Colors.grey,
-                  BlendMode.srcIn,
-                ),
+            label: "메시징",
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/icons/profile.svg',
+              height: 32,
+              width: 32,
+              colorFilter: ColorFilter.mode(
+                _location() == 2 ? WatsoColor.primary : Colors.black12,
+                BlendMode.srcIn,
               ),
             ),
-          ],
-        ),
+            label: "히스토리",
+          ),
+        ],
       ),
       floatingActionButton: _location() == 0 ? MainFloatingBtn() : null,
     );

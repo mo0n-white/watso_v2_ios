@@ -58,6 +58,9 @@ class MainHeader extends ConsumerWidget {
                       initialDate: selectedDate,
                       firstDate: DateTime(2000),
                       lastDate: DateTime(3000));
+                  if (picked != null) {
+                    filterFunctions.changeDate(picked);
+                  }
                 },
                 icon: SvgPicture.asset("assets/icons/calendar.svg"))
           ],
