@@ -5,12 +5,23 @@ part 'taxi_model.freezed.dart';
 part 'taxi_model.g.dart';
 
 @freezed
+class TaxiOption with _$TaxiOption {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory TaxiOption({
+    required DateTime departDatetime,
+    required TaxiDirection direction,
+  }) = _TaxiOption;
+
+  factory TaxiOption.fromJson(Map<String, dynamic> json) =>
+      _$TaxiOptionFromJson(json);
+}
+
+@freezed
 class CreateTaxiGroup with _$CreateTaxiGroup {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory CreateTaxiGroup({
     required int maxMember,
-    required DateTime departDatetime,
-    required String direction,
+    required TaxiOption option,
   }) = _CreateTaxiGroup;
 
   factory CreateTaxiGroup.fromJson(Map<String, dynamic> json) =>
@@ -24,8 +35,7 @@ class TaxiGroup with _$TaxiGroup {
     required int id,
     required MyUser owner,
     required TaxiStatus status,
-    required TaxiDirection direction,
-    required DateTime departDatetime,
+    required TaxiOption option,
     required int fee,
     required TaxiMember member,
   }) = _TaxiGroup;

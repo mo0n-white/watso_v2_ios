@@ -22,11 +22,10 @@ class CustomInterceptors extends InterceptorsWrapper {
     RequestInterceptorHandler handler,
   ) async {
     log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
-
-    if (auth != null) {
-      options.headers['Authorization'] = 'Bearer ${auth.accessToken}';
+    log('auth: ${auth.value}');
+    if (auth.value != null) {
+      options.headers['Authorization'] = '${auth.value!.accessToken}';
     }
-
     return super.onRequest(options, handler);
   }
 
@@ -51,14 +50,14 @@ class CustomInterceptors extends InterceptorsWrapper {
         err.requestOptions.path == '/auth/login/kakao';
     if (isAuthError && !isAuthPath) {
       try {
-        if (auth == null) {
+        if (auth.value == null) {
           return handler.reject(err);
         }
 
         // refresh token이 있을 경우, 새로운 access token을 요청한다.
         Dio retryDio = Dio(dioOptions);
         final respToken = await retryDio.post('/auth/login/refresh', data: {
-          'refresh_token': auth.refreshToken,
+          'refresh_token': auth.value.refreshToken,
         });
         if (respToken.data['access_token'] == null ||
             respToken.data['refresh_token'] == null) {
