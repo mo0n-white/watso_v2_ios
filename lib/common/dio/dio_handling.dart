@@ -73,6 +73,7 @@ class CustomInterceptors extends InterceptorsWrapper {
         final response = await retryDio.fetch(options);
         return handler.resolve(response);
       } catch (e) {
+        log('Failed to refresh token $e');
         try {
           ref.read(authControllerProvider.notifier).unAuthorize();
         } catch (e) {

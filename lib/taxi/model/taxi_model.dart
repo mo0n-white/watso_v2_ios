@@ -56,6 +56,17 @@ extension TaxiStatusExtension on TaxiStatus {
 
 enum TaxiDirection { CAMPUS, STATION }
 
+extension TaxiDirectionExtension on TaxiDirection {
+  String toKorean() {
+    switch (this) {
+      case TaxiDirection.CAMPUS:
+        return '부산대 밀양캠';
+      case TaxiDirection.STATION:
+        return '밀양역';
+    }
+  }
+}
+
 @freezed
 class TaxiMember with _$TaxiMember {
   @JsonSerializable(fieldRename: FieldRename.snake)

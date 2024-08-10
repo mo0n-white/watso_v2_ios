@@ -6,6 +6,7 @@ import 'package:watso_v2/common/constants/styles.dart';
 
 import '../../common/router/routes.dart';
 import '../../common/widgets/Boxes.dart';
+import '../model/taxi_model.dart';
 
 class TaxiMainScreen extends StatefulWidget {
   const TaxiMainScreen({super.key});
@@ -16,8 +17,8 @@ class TaxiMainScreen extends StatefulWidget {
 
 class _TaxiMainScreenState extends State<TaxiMainScreen> {
   DateTime _selectedDate = DateTime.now();
-  String departure = "부산대 밀양캠";
-  String destination = "밀양역";
+  TaxiDirection departure = TaxiDirection.CAMPUS;
+  TaxiDirection destination = TaxiDirection.STATION;
 
   _beforeDate() {
     setState(() {
@@ -32,7 +33,7 @@ class _TaxiMainScreenState extends State<TaxiMainScreen> {
   }
 
   _changeDeparture() {
-    String tmp = departure;
+    TaxiDirection tmp = departure;
     setState(() {
       departure = destination;
       destination = tmp;
@@ -100,7 +101,7 @@ class _TaxiMainScreenState extends State<TaxiMainScreen> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              departure,
+                              departure.toKorean(),
                               style: WatsoFont.mainBody,
                             ),
                           ],
@@ -123,7 +124,7 @@ class _TaxiMainScreenState extends State<TaxiMainScreen> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              destination,
+                              destination.toKorean(),
                               style: WatsoFont.mainBody,
                             ),
                           ],
@@ -192,7 +193,7 @@ class _TaxiMainScreenState extends State<TaxiMainScreen> {
                                           "assets/icons/direction.svg"),
                                       SizedBox(width: 8),
                                       Text(
-                                        departure,
+                                        departure.toKorean(),
                                       ),
                                     ],
                                   ),
@@ -201,7 +202,7 @@ class _TaxiMainScreenState extends State<TaxiMainScreen> {
                                       SvgPicture.asset("assets/icons/pin.svg"),
                                       SizedBox(width: 8),
                                       Text(
-                                        destination,
+                                        destination.toKorean(),
                                       ),
                                     ],
                                   ),

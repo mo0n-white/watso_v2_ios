@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:watso_v2/common/router/routes.dart';
 import 'package:watso_v2/common/widgets/Layout.dart';
 
+import '../auth/auth_model.dart';
 import '../auth/auth_provider.dart';
 
 part 'router.g.dart';
@@ -12,34 +15,38 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
-GoRouter myRouter(ref) {
-  final auth = ref.watch(authControllerProvider);
-  ref.onDispose(() => auth.dispose());
+GoRouter myRouter(MyRouterRef ref) {
+  final isAuth = ValueNotifier<AsyncValue<Auth?>>(const AsyncLoading());
+  ref
+    ..onDispose(() => isAuth.dispose())
+    ..listen(authControllerProvider, (_, authValue) {
+      // isAuthValue is null
+      log('authValue: ${authValue.value}');
+      isAuth.value = AsyncData(authValue.value);
+
+      log('isAuth: ${isAuth.value.value}');
+    });
 
   return GoRouter(
       routes: _routes,
       navigatorKey: _rootNavigatorKey,
       initialLocation: Routes.tMain.path,
-      refreshListenable: auth,
+      refreshListenable: isAuth,
       debugLogDiagnostics: true,
       redirect: (context, state) {
         // 유저 정보를 불러올때까지 로딩...
-        if (auth.isLoading || !auth.hasValue) {
+        if (isAuth.value.isLoading || !isAuth.value.hasValue) {
           return Routes.splash.path;
         }
 
-        final authValue = auth.requireValue;
-        if (authValue == null) {
-          return Routes.login.path;
-        }
-        // 로그인이 되어있는 상태에서 로그인 페이지로 가려고 하면 메인으로 리다이렉트
+        final auth = isAuth.value.requireValue;
         if (state.uri.path == Routes.splash.path) {
-          return authValue ? Routes.tMain.path : Routes.login.path;
+          return auth != null ? Routes.tMain.path : Routes.login.path;
         }
         if (state.uri.path == Routes.login.path) {
-          return authValue ? Routes.tMain.path : null;
+          return auth != null ? Routes.tMain.path : null;
         }
-        return authValue ? null : Routes.login.path;
+        return auth != null ? null : Routes.login.path;
       });
 }
 // splash screen 만들어야함.
