@@ -19,7 +19,7 @@ class PageLayout extends StatelessWidget {
   _location() {
     String path = location;
     if (path == Routes.tMain.path) return 0;
-    if (path == Routes.tMessaging.path) return 1;
+    if (path == Routes.tMessaging().path) return 1;
     if (path == Routes.tHistory.path) return 2;
   }
 
@@ -100,7 +100,7 @@ class PageLayout extends StatelessWidget {
           if (index == 0) {
             context.go(Routes.tMain.path);
           } else if (index == 1) {
-            context.go(Routes.tMessaging.path);
+            context.go(Routes.tMessaging(id: "32").path);
           } else if (index == 2) {
             context.go(Routes.tHistory.path);
           }

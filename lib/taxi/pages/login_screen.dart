@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,7 +32,7 @@ class LoginScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    "로그인",
+                    "왓소 로그인",
                     textAlign: TextAlign.center,
                     style: WatsoFont.title,
                   ),
@@ -61,13 +64,21 @@ class LoginScreen extends ConsumerWidget {
                               );
                             });
                       } catch (error) {
-                        print('카카오톡으로 로그인 실패 $error');
+                        log('카카오톡으로 로그인 실패 $error');
+                        var code = "알 수 없는 문제";
+                        if (error is DioException) {
+                          if (error.response != null) {
+                            var statusCode = error.response?.statusCode ?? 500;
+                            var message = error.response?.data ?? "알 수 없는 문제";
+                            code = "$statusCode : $message";
+                          }
+                        }
                         showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: Text('로그인 실패'),
-                                content: Text('로그인에 실패했습니다.'),
+                                content: Text(code),
                                 actions: [
                                   TextButton(
                                     onPressed: () {
@@ -80,7 +91,8 @@ class LoginScreen extends ConsumerWidget {
                             });
                       }
                     },
-                    child: Text("카카오 로그인"),
+                    child:
+                        Text("카카오 로그인", style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),

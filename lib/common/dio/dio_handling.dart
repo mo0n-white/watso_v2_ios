@@ -21,11 +21,21 @@ class CustomInterceptors extends InterceptorsWrapper {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
     log('auth: ${auth.value}');
     if (auth.value != null) {
       options.headers['Authorization'] = '${auth.value!.accessToken}';
     }
+    // data to json
+    try {
+      if (options.data != null) {
+        options.data = options.data.toJson();
+      }
+      log('data: ${options.data}');
+    } catch (e) {
+      log('Failed to convert data to json $e');
+    }
+    log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
+
     return super.onRequest(options, handler);
   }
 

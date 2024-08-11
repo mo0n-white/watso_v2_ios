@@ -15,12 +15,16 @@ class FilterOptions extends _$FilterOptions {
     );
   }
 
-  changeDirection() {
-    state = state.copyWith(
-      direction: state.direction == TaxiDirection.CAMPUS
-          ? TaxiDirection.STATION
-          : TaxiDirection.CAMPUS,
-    );
+  changeDirection({TaxiDirection? direction}) {
+    if (direction == null) {
+      state = state.copyWith(
+        direction: state.direction == TaxiDirection.CAMPUS
+            ? TaxiDirection.STATION
+            : TaxiDirection.CAMPUS,
+      );
+    } else {
+      state = state.copyWith(direction: direction);
+    }
   }
 
   changeDate(DateTime date) {

@@ -41,7 +41,7 @@ class MainBody extends ConsumerWidget {
                 margin: EdgeInsets.only(bottom: 16.0),
                 padding: const EdgeInsets.symmetric(
                     vertical: 12.0, horizontal: 16.0),
-                child: Text("모집중인 텍시가 없습니다"));
+                child: Text("모집중인 택시가 없습니다"));
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,8 +49,7 @@ class MainBody extends ConsumerWidget {
               for (TaxiGroup group in data) ...{
                 InkWell(
                     onTap: () {
-                      context
-                          .push(Routes.recruitment(group.id.toString()).path);
+                      context.push(Routes.tRecruit(group.id.toString()).path);
                     },
                     child: AngularBox(
                       margin: EdgeInsets.only(bottom: 16.0),
@@ -69,8 +68,7 @@ class MainBody extends ConsumerWidget {
                                         "assets/icons/direction.svg"),
                                     SizedBox(width: 8),
                                     Text(
-                                      group.option.direction ==
-                                              TaxiDirection.CAMPUS
+                                      group.direction == TaxiDirection.CAMPUS
                                           ? TaxiDirection.STATION.toKorean()
                                           : TaxiDirection.CAMPUS.toKorean(),
                                     ),
@@ -81,7 +79,7 @@ class MainBody extends ConsumerWidget {
                                     SvgPicture.asset("assets/icons/pin.svg"),
                                     SizedBox(width: 8),
                                     Text(
-                                      group.option.direction.toKorean(),
+                                      group.direction.toKorean(),
                                     ),
                                   ],
                                 ),
@@ -92,7 +90,7 @@ class MainBody extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Text(convertHHMM(group.option.departDatetime)),
+                              Text(convertHHMM(group.departDatetime)),
                               Text("6200원"),
                               Row(
                                 mainAxisSize: MainAxisSize.min,

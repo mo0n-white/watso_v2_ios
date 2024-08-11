@@ -6,7 +6,6 @@ part 'taxi_model.g.dart';
 
 @freezed
 class TaxiOption with _$TaxiOption {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory TaxiOption({
     required DateTime departDatetime,
     required TaxiDirection direction,
@@ -18,10 +17,10 @@ class TaxiOption with _$TaxiOption {
 
 @freezed
 class CreateTaxiGroup with _$CreateTaxiGroup {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory CreateTaxiGroup({
     required int maxMember,
-    required TaxiOption option,
+    required DateTime departDatetime,
+    required TaxiDirection direction,
   }) = _CreateTaxiGroup;
 
   factory CreateTaxiGroup.fromJson(Map<String, dynamic> json) =>
@@ -30,12 +29,12 @@ class CreateTaxiGroup with _$CreateTaxiGroup {
 
 @freezed
 class TaxiGroup with _$TaxiGroup {
-  @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
   const factory TaxiGroup({
     required int id,
     required MyUser owner,
     required TaxiStatus status,
-    required TaxiOption option,
+    required DateTime departDatetime,
+    required TaxiDirection direction,
     required int fee,
     required TaxiMember member,
   }) = _TaxiGroup;
@@ -62,6 +61,19 @@ extension TaxiStatusExtension on TaxiStatus {
         return 'complete';
     }
   }
+
+  String toKr() {
+    switch (this) {
+      case TaxiStatus.OPEN:
+        return '모집';
+      case TaxiStatus.CLOSE:
+        return '마감';
+      case TaxiStatus.SETTLE:
+        return '정산';
+      case TaxiStatus.COMPLETE:
+        return '완료';
+    }
+  }
 }
 
 enum TaxiDirection { CAMPUS, STATION }
@@ -79,7 +91,6 @@ extension TaxiDirectionExtension on TaxiDirection {
 
 @freezed
 class TaxiMember with _$TaxiMember {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory TaxiMember({
     required int currentMember,
     required int maxMember,
@@ -92,7 +103,6 @@ class TaxiMember with _$TaxiMember {
 
 @freezed
 class TaxiBill with _$TaxiBill {
-  @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
   const factory TaxiBill({
     required MyUser user,
     required int cost,
@@ -112,7 +122,6 @@ class TaxiBill with _$TaxiBill {
 class TaxiTotalFee with _$TaxiTotalFee {
   const TaxiTotalFee._();
 
-  @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
   const factory TaxiTotalFee({
     required int fee,
     required List<TaxiBill> bills,

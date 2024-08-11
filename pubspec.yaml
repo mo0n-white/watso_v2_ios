@@ -46,10 +46,11 @@ dependencies:
   flutter_riverpod: ^2.5.1
   # annotation
   riverpod_annotation: ^2.3.5
-  json_annotation: ^4.8.1
+  json_annotation: ^4.9.0
   freezed_annotation: ^2.4.1
   flutter_secure_storage: ^9.2.2
   flutter_localization: ^0.2.1
+  timelines: ^0.1.0
 
 
 

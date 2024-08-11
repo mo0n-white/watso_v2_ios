@@ -29,7 +29,7 @@ abstract class TaxiRepository {
   });
 
   @POST('/taxi')
-  Future<TaxiGroup> createTaxiGroup({
+  Future<void> createTaxiGroup({
     @Body() required CreateTaxiGroup group,
   });
 
