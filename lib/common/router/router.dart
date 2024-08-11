@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:watso_v2/common/router/routes.dart';
-import 'package:watso_v2/common/user/user_provider.dart';
 import 'package:watso_v2/common/widgets/Layout.dart';
+
+import '../auth/auth_provider.dart';
 
 part 'router.g.dart';
 
@@ -12,37 +13,33 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
 GoRouter myRouter(ref) {
-  final isAuth = ValueNotifier<AsyncValue<bool>>(const AsyncLoading());
-  ref
-    ..onDispose(() => isAuth.dispose())
-    ..listen(authControllerProvider, (_, isAuthValue) {
-      // isAuthValue is null
-      if (isAuthValue == null) {
-        isAuth.value = const AsyncData(false);
-      } else {
-        isAuth.value = const AsyncData(true);
-      }
-    });
+  final auth = ref.watch(authControllerProvider);
+  ref.onDispose(() => auth.dispose());
 
   return GoRouter(
       routes: _routes,
       navigatorKey: _rootNavigatorKey,
-      initialLocation: Routes.splash.path,
-      refreshListenable: isAuth,
+      initialLocation: Routes.tMain.path,
+      refreshListenable: auth,
       debugLogDiagnostics: true,
       redirect: (context, state) {
-        if (isAuth.value.isLoading || !isAuth.value.hasValue) {
+        // 유저 정보를 불러올때까지 로딩...
+        if (auth.isLoading || !auth.hasValue) {
           return Routes.splash.path;
         }
 
-        final auth = isAuth.value.requireValue;
+        final authValue = auth.requireValue;
+        if (authValue == null) {
+          return Routes.login.path;
+        }
+        // 로그인이 되어있는 상태에서 로그인 페이지로 가려고 하면 메인으로 리다이렉트
         if (state.uri.path == Routes.splash.path) {
-          return auth ? Routes.taxiMain.path : Routes.login.path;
+          return authValue ? Routes.tMain.path : Routes.login.path;
         }
         if (state.uri.path == Routes.login.path) {
-          return auth ? Routes.taxiMain.path : null;
+          return authValue ? Routes.tMain.path : null;
         }
-        return auth ? null : Routes.login.path;
+        return authValue ? null : Routes.login.path;
       });
 }
 // splash screen 만들어야함.
@@ -65,39 +62,38 @@ final List<RouteBase> _routes = [
       builder: (BuildContext context, GoRouterState state, child) {
         return PageLayout(
           body: child,
-          location: state.fullPath ?? Routes.taxiMain.path,
+          location: state.fullPath ?? Routes.tMain.path,
         );
       },
       routes: [
         GoRoute(
-          path: Routes.taxiMain.path,
+          path: Routes.tMain.path,
           parentNavigatorKey: _shellNavigatorKey,
           builder: (BuildContext context, GoRouterState state) {
-            return Routes.taxiMain.screen;
+            return Routes.tMain.screen;
           },
         ),
         GoRoute(
-            path: Routes.messaging.path,
+            path: Routes.tMessaging.path,
             parentNavigatorKey: _shellNavigatorKey,
             builder: (BuildContext context, GoRouterState state) {
-              return Routes.messaging.screen;
+              return Routes.tMessaging.screen;
             }),
         GoRoute(
-            path: Routes.profile.path,
+            path: Routes.tHistory.path,
             parentNavigatorKey: _shellNavigatorKey,
             builder: (BuildContext context, GoRouterState state) {
-              return Routes.profile.screen;
+              return Routes.tHistory.screen;
             }),
       ]),
   GoRoute(
     path: Routes.recruitment(':pageId').path,
     parentNavigatorKey: _rootNavigatorKey,
     builder: (BuildContext context, GoRouterState state) {
+      if (state.pathParameters['pageId'] == null) {
+        return Routes.tMain.screen;
+      }
       return Routes.recruitment(state.pathParameters['pageId']!).screen;
     },
-  ),
-  GoRoute(
-    path: Routes.login.path,
-    builder: (context, state) => Routes.login.screen,
   ),
 ];
