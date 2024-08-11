@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:watso_v2/taxi/pages/create_screen.dart';
 
+import '../../taxi/pages/history_screen.dart';
 import '../../taxi/pages/login_screen.dart';
 import '../../taxi/pages/main_screen.dart';
 import '../../taxi/pages/messaging_screen.dart';
@@ -14,12 +16,20 @@ class Route {
 }
 
 class Routes {
+  // common
   static const splash = Route(SplashScreen(), '/splash');
   static const login = Route(LoginScreen(), '/login');
-  static const taxiMain = Route(TaxiMainScreen(), '/taxi');
-  static const messaging = Route(MessagingScreen(), '/taxi/messaging');
-  static const profile = Route(TaxiMainScreen(), '/taxi/profile');
 
-  static Route recruitment(String id) =>
+  // taxi
+  static const tMain = Route(TaxiMainScreen(), '/taxi/main');
+
+  static Route tMessaging({String? id}) =>
+      Route(MessagingScreen(pageId: id), '/taxi/messaging/$id');
+  static const tHistory = Route(HistoryScreen(), '/taxi/history');
+  static const tCreate = Route(CreateScreen(), '/taxi/create');
+
+  static Route tRecruit(String id) =>
       Route(TaxiRecruitmentScreen(pageId: id), '/taxi/recruitment/$id');
+
+//delivery
 }

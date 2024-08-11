@@ -1,9 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:watso_v2/common/router/routes.dart';
-import 'package:watso_v2/common/user/user_provider.dart';
-import 'package:watso_v2/common/widgets/Layout.dart';
+
+import '../auth/auth_model.dart';
+import '../auth/auth_provider.dart';
+import '../widgets/Layout.dart';
 
 part 'router.g.dart';
 
@@ -11,38 +15,38 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
-GoRouter myRouter(ref) {
-  final isAuth = ValueNotifier<AsyncValue<bool>>(const AsyncLoading());
+GoRouter myRouter(MyRouterRef ref) {
+  final isAuth = ValueNotifier<AsyncValue<Auth?>>(const AsyncLoading());
   ref
     ..onDispose(() => isAuth.dispose())
-    ..listen(authControllerProvider, (_, isAuthValue) {
+    ..listen(authControllerProvider, (_, authValue) {
       // isAuthValue is null
-      if (isAuthValue == null) {
-        isAuth.value = const AsyncData(false);
-      } else {
-        isAuth.value = const AsyncData(true);
-      }
+      log('authValue: ${authValue.value}');
+      isAuth.value = AsyncData(authValue.value);
+
+      log('isAuth: ${isAuth.value.value}');
     });
 
   return GoRouter(
       routes: _routes,
       navigatorKey: _rootNavigatorKey,
-      initialLocation: Routes.splash.path,
+      initialLocation: Routes.tMain.path,
       refreshListenable: isAuth,
       debugLogDiagnostics: true,
       redirect: (context, state) {
+        // 유저 정보를 불러올때까지 로딩...
         if (isAuth.value.isLoading || !isAuth.value.hasValue) {
           return Routes.splash.path;
         }
 
         final auth = isAuth.value.requireValue;
         if (state.uri.path == Routes.splash.path) {
-          return auth ? Routes.taxiMain.path : Routes.login.path;
+          return auth != null ? Routes.tMain.path : Routes.login.path;
         }
         if (state.uri.path == Routes.login.path) {
-          return auth ? Routes.taxiMain.path : null;
+          return auth != null ? Routes.tMain.path : null;
         }
-        return auth ? null : Routes.login.path;
+        return auth != null ? null : Routes.login.path;
       });
 }
 // splash screen 만들어야함.
@@ -62,42 +66,58 @@ final List<RouteBase> _routes = [
   ),
   ShellRoute(
       navigatorKey: _shellNavigatorKey,
-      builder: (BuildContext context, GoRouterState state, child) {
-        return PageLayout(
+      pageBuilder: (context, state, child) {
+        return NoTransitionPage(
+            child: PageLayout(
           body: child,
-          location: state.fullPath ?? Routes.taxiMain.path,
-        );
+          location: state.fullPath ?? Routes.tMain.path,
+        ));
       },
+      // builder: (BuildContext context, GoRouterState state, child) {
+      //   return PageLayout(
+      //     body: child,
+      //     location: state.fullPath ?? Routes.tMain.path,
+      //   );
+      // },
       routes: [
         GoRoute(
-          path: Routes.taxiMain.path,
+          path: Routes.tMain.path,
           parentNavigatorKey: _shellNavigatorKey,
-          builder: (BuildContext context, GoRouterState state) {
-            return Routes.taxiMain.screen;
+          pageBuilder: (BuildContext context, GoRouterState state) {
+            return NoTransitionPage(child: Routes.tMain.screen);
           },
         ),
         GoRoute(
-            path: Routes.messaging.path,
+            path: Routes.tMessaging(id: ':pageId').path,
             parentNavigatorKey: _shellNavigatorKey,
-            builder: (BuildContext context, GoRouterState state) {
-              return Routes.messaging.screen;
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              // return Routes.tRecruit(state.pathParameters['pageId']!).screen;
+
+              return NoTransitionPage(
+                  child: Routes.tMessaging(id: state.pathParameters['pageId'])
+                      .screen);
             }),
         GoRoute(
-            path: Routes.profile.path,
+            path: Routes.tHistory.path,
             parentNavigatorKey: _shellNavigatorKey,
-            builder: (BuildContext context, GoRouterState state) {
-              return Routes.profile.screen;
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              return NoTransitionPage(child: Routes.tHistory.screen);
             }),
       ]),
   GoRoute(
-    path: Routes.recruitment(':pageId').path,
+      path: Routes.tCreate.path,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        return Routes.tCreate.screen;
+      }),
+  GoRoute(
+    path: Routes.tRecruit(':pageId').path,
     parentNavigatorKey: _rootNavigatorKey,
     builder: (BuildContext context, GoRouterState state) {
-      return Routes.recruitment(state.pathParameters['pageId']!).screen;
+      if (state.pathParameters['pageId'] == null) {
+        return Routes.tMain.screen;
+      }
+      return Routes.tRecruit(state.pathParameters['pageId']!).screen;
     },
-  ),
-  GoRoute(
-    path: Routes.login.path,
-    builder: (context, state) => Routes.login.screen,
   ),
 ];
