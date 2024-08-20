@@ -10,22 +10,42 @@ class AdjustmentDialog extends StatefulWidget {
   @override
   State<AdjustmentDialog> createState() => _AdjustmentDialogState();
 }
-
 class _AdjustmentDialogState extends State<AdjustmentDialog> {
-  final TextEditingController _totalAmountController = TextEditingController(
-      text: '6200');
-  final TextEditingController _totalPeopleController = TextEditingController(
-      text: '4');
-  final List<TextEditingController> _percentageControllers = [
-    TextEditingController(text: '25'),
-    TextEditingController(text: '25'),
-    TextEditingController(text: '25'),
-  ];
-  List<String> members = ["찰봉", "준하", "창욱"];
+  final TextEditingController _totalAmountController = TextEditingController(text: '6200');
+  List<TextEditingController> _percentageControllers = [];
+  List<TextEditingController> _amountControllers = [];
+  List<String> members = ["찰봉", "준하", "창욱", "민지"];
+  bool _isWarningVisible = false;
+  List<bool> _isAmountFieldInvalid = [];
 
+  @override
+  void initState() {
+    super.initState();
+
+    if (members.isNotEmpty) {
+      // 멤버 수에 따라 컨트롤러 리스트 초기화
+      int tmpPercentage = 100 ~/ members.length;
+      int tmpAmount = 6200 ~/ members.length;
+
+      _percentageControllers = List.generate(members.length, (index) => TextEditingController(text: tmpPercentage.toString()));
+      _amountControllers = List.generate(members.length, (index) => TextEditingController(text: tmpAmount.toString()));
+
+      _isAmountFieldInvalid = List<bool>.filled(members.length, false);
+    } else {
+      // members가 비어 있는 경우
+      _percentageControllers = [];
+      _amountControllers = [];
+      _isAmountFieldInvalid = [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (members.isEmpty) {
+      return Center(
+        child: Text('멤버가 없습니다.'),
+      );
+    }
     return AlertDialog(
       content: SingleChildScrollView(
         child: Column(
@@ -63,22 +83,32 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
             Padding(
               padding: EdgeInsets.only(top: 10, bottom: 10),
               child: Column(
-                children: members
-                    .asMap()
-                    .entries
-                    .map((entry) {
-                  int index = entry.key;
-                  String member = entry.value;
-
+                children: List.generate(members.length, (index) {
+                  String member = members[index];
                   return Column(
                     children: [
                       _buildPersonRow(member, index),
                       SizedBox(height: 8),
                     ],
                   );
-                }).toList(),
+                }),
               ),
             ),
+            if (_isWarningVisible)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Column(
+                  children: [
+                    Text(
+                      '총 결제 금액과 입력한 개인 요금의 합이\n일치하지 않습니다.',
+                      style: TextStyle(color: Colors.red, fontSize: 14),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis, // 줄이 넘칠 경우
+                    ),
+                    SizedBox(height: 8),
+                  ],
+                ),
+              ),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -86,10 +116,9 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
                 onPressed: () {
-                  // 버튼 클릭 시 수행할 작업, 아래 코드는 임시로 해둠
-                  _handlePercentage();
+                  _handleAdjustmentRequest();
                 },
-                child: Text('정산 요청'),
+                child: Text('정산 요청', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],
@@ -98,9 +127,7 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
     );
   }
 
-  // 그룹 정산 내역
-  Widget _buildRow(String label, TextEditingController controller,
-      String suffix, {bool readOnly = false}) {
+  Widget _buildRow(String label, TextEditingController controller, String suffix, {bool readOnly = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -118,7 +145,9 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 8),
                 ),
                 onChanged: (value) {
-                  setState(() {}); // 값 변경될 때마다 업데이트
+                  setState(() {
+                    _setAmountControllers();
+                  });
                 },
               ),
             ),
@@ -130,7 +159,6 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
     );
   }
 
-  // 개인 정산 내역
   Widget _buildPersonRow(String name, int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +168,8 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
           style: TextStyle(
             fontSize: 12,
             color: Color(0xFF767676),
-          ),),
+          ),
+        ),
         SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,11 +182,17 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
                     controller: _percentageControllers[index],
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: _isAmountFieldInvalid[index] ? Colors.red : Colors.grey,
+                        ),
+                      ),
                       contentPadding: EdgeInsets.symmetric(horizontal: 8),
                     ),
                     onChanged: (value) {
-                      setState(() {}); // 값이 변경될 때마다 UI를 업데이트
+                      setState(() {
+                        _updateAmountController(index);  // 값이 변경될 때마다 UI 업데이트
+                      });
                     },
                   ),
                 ),
@@ -165,35 +200,89 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
                 Text('%'),
               ],
             ),
-            Text('${_calculateIndividualAmount(index)} 원'),
+            Row(
+              children: [
+                Container(
+                  width: 80,
+                  child: TextField(
+                    controller: _amountControllers[index],
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: _isAmountFieldInvalid[index] ? Colors.red : Colors.grey,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _updatePercentageController(index);  // 값이 변경될 때마다 UI 업데이트
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text('원'),
+              ],
+            ),
           ],
         ),
       ],
     );
   }
 
-  // 1인당 요금(단순 n빵)
+  void _setAmountControllers() {
+    int totalAmount = int.tryParse(_totalAmountController.text) ?? 0;
+    for (int i = 0; i < _percentageControllers.length; i++) {
+      int percentage = int.tryParse(_percentageControllers[i].text) ?? 0;
+      _amountControllers[i].text = ((totalAmount * percentage) / 100).toStringAsFixed(0);
+    }
+  }
+
+  void _updateAmountController(int index) {
+    int totalAmount = int.tryParse(_totalAmountController.text) ?? 0;
+    int percentage = int.tryParse(_percentageControllers[index].text) ?? 0;
+    _amountControllers[index].text = ((totalAmount * percentage) / 100).toStringAsFixed(0);
+  }
+
+  void _updatePercentageController(int index) {
+    int totalAmount = int.tryParse(_totalAmountController.text) ?? 0;
+    int amount = int.tryParse(_amountControllers[index].text) ?? 0;
+    if (totalAmount != 0) {
+      _percentageControllers[index].text = ((amount * 100) / totalAmount).toStringAsFixed(0);
+    }
+  }
+
   String _calculatePerPerson() {
     int totalAmount = int.tryParse(_totalAmountController.text) ?? 0;
     return (totalAmount / members.length).toStringAsFixed(0);
   }
 
-  // 개인 요금(비율)
-  String _calculateIndividualAmount(int index) {
-    int totalAmount = int.tryParse(_totalAmountController.text) ?? 0;
-    int percentage = int.tryParse(_percentageControllers[index].text) ?? 0;
-    return ((totalAmount * percentage) / 100).toStringAsFixed(0);
-  }
-
-  void _handlePercentage() {
-    int totalPercentage = _percentageControllers
+  void _handleAdjustmentRequest() {
+    int totalAmount = _amountControllers
         .map((controller) => int.tryParse(controller.text) ?? 0)
         .fold(0, (sum, value) => sum + value);
 
-    if (totalPercentage != 100) {
-      debugPrint('퍼센트 합 100 아님');
+    int totalAmountInput = int.tryParse(_totalAmountController.text) ?? 0;
+
+    if (totalAmount != totalAmountInput) {
+      debugPrint('총 결제 금액과 입력한 개인 요금의 합이 일치하지 않습니다.');
+      setState(() {
+        _isWarningVisible = true;
+        for (int i = 0; i < _amountControllers.length; i++) {
+          _isAmountFieldInvalid[i] = true;
+        }
+      });
     } else {
-      // 퍼센트 합계가 100인 경우 처리할 코드
+      // 개인 요금의 합이 총 결제 금액과 일치할 경우 처리할 코드
+      setState(() {
+        _isWarningVisible = false;
+        for (int i = 0; i < _amountControllers.length; i++) {
+          _isAmountFieldInvalid[i] = false;
+        }
+      });
+      debugPrint('일치.');
       Navigator.of(context).pop();
     }
   }
@@ -201,8 +290,8 @@ class _AdjustmentDialogState extends State<AdjustmentDialog> {
   @override
   void dispose() {
     _totalAmountController.dispose();
-    _totalPeopleController.dispose();
     _percentageControllers.forEach((controller) => controller.dispose());
+    _amountControllers.forEach((controller) => controller.dispose());
     super.dispose();
   }
 }
