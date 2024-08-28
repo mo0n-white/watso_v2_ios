@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart' show SvgPicture;
 
 import '../../common/constants/styles.dart';
+import '../../common/utils/utils.dart';
 import '../../common/widgets/Boxes.dart';
 
 class RecuitInfoCard extends StatelessWidget {
@@ -21,10 +22,6 @@ class RecuitInfoCard extends StatelessWidget {
     required this.departTime,
     required this.estimatedCost,
   });
-
-  // convert DateTime to 10:00AM format
-  String departTimeToString(DateTime departTime) =>
-      "${departTime.hour}:${departTime.minute}${departTime.hour > 12 ? "PM" : "AM"}";
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +85,7 @@ class RecuitInfoCard extends StatelessWidget {
               children: [
                 TileContentBox(
                   title: "출발 시간",
-                  content: departTimeToString(departTime),
+                  content: convertTimeAMPM(departTime),
                 ),
                 TileContentBox(
                   title: "예상금액",
