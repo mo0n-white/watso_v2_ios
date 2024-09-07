@@ -5,17 +5,37 @@ import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:watso_v2/common/storage/storage_provider.dart';
 
-import '../dio/dio.dart';
+import '../dio/dio_base.dart';
 import 'auth_model.dart';
 
 part 'auth_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
+  final authDio = Dio(dioOptions);
+  final interceptor = InterceptorsWrapper(
+    onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+      log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
+      return handler.next(options);
+    },
+    onResponse: (Response response, ResponseInterceptorHandler handler) {
+      log('[RES] [${response.requestOptions.method}] ${response.requestOptions.uri} ${response.data?.toString()}  ');
+
+      return handler.next(response);
+    },
+    onError: (DioException err, ErrorInterceptorHandler handler) {
+      log('[ERR] [${err.requestOptions.method}] ${err.requestOptions.uri} ${err.response?.statusCode} ${err.requestOptions.data} ${err.response?.data}');
+
+      return handler.next(err);
+    },
+  );
+  late final storage;
+
   @override
   Future<Auth?> build() async {
     try {
-      final storage = ref.read(storageControllerProvider.notifier);
+      authDio.interceptors.add(interceptor);
+      storage = ref.read(storageControllerProvider.notifier);
       Auth? auth = await storage.getToken();
       if (auth == null) {
         return null;
@@ -30,13 +50,11 @@ class AuthController extends _$AuthController {
   }
 
   authorize(Auth auth) async {
-    final storage = ref.read(storageControllerProvider.notifier);
     storage.setToken(auth);
     state = AsyncData(auth);
   }
 
   unAuthorize() {
-    final storage = ref.read(storageControllerProvider.notifier);
     storage.removeToken();
     state = const AsyncData(null);
   }
@@ -50,8 +68,7 @@ class AuthController extends _$AuthController {
   }
 
   Future<Auth> _getCheckAuthFromRefresh(Auth auth) async {
-    Dio dio = ref.watch(dioProvider);
-    final response = await dio.post('/auth/login/refresh', data: {
+    final response = await authDio.post('/auth/login/refresh', data: {
       'refresh_token': auth.refreshToken,
     });
     final data = response.data;
@@ -62,8 +79,7 @@ class AuthController extends _$AuthController {
   }
 
   Future<Auth> _loginWithToken(token) async {
-    Dio dio = ref.watch(dioProvider);
-    final response = await dio.get('/auth/login/kakao', queryParameters: {
+    final response = await authDio.get('/auth/login/kakao', queryParameters: {
       'access_token': token.accessToken,
     });
     final data = response.data;

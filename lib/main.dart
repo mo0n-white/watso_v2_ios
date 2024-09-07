@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
 import 'package:watso_v2/common/constants/styles.dart';
@@ -24,6 +25,14 @@ class MyApp extends ConsumerWidget {
     final myRouter = ref.watch(myRouterProvider);
 
     return MaterialApp.router(
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ko', 'KR'),
+        ],
         title: 'Watso',
         debugShowCheckedModeBanner: false,
         routerConfig: myRouter,
@@ -31,6 +40,8 @@ class MyApp extends ConsumerWidget {
           primaryColor: WatsoColor.primary,
           highlightColor: WatsoColor.primary,
           focusColor: WatsoColor.primary,
+          colorScheme:
+              ColorScheme.fromSwatch().copyWith(primary: WatsoColor.primary),
           fontFamily: 'NotoSans',
         ));
   }

@@ -21,11 +21,20 @@ class CustomInterceptors extends InterceptorsWrapper {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
-
-    if (auth != null) {
-      options.headers['Authorization'] = 'Bearer ${auth.accessToken}';
+    log('auth: ${auth.value}');
+    if (auth.value != null) {
+      options.headers['Authorization'] = '${auth.value!.accessToken}';
     }
+    // data to json
+    try {
+      if (options.data != null) {
+        options.data = options.data.toJson();
+      }
+      log('data: ${options.data}');
+    } catch (e) {
+      log('Failed to convert data to json $e');
+    }
+    log('[REQ] [${options.method}] ${options.uri} ${options.data} ${options.headers}');
 
     return super.onRequest(options, handler);
   }
@@ -51,14 +60,14 @@ class CustomInterceptors extends InterceptorsWrapper {
         err.requestOptions.path == '/auth/login/kakao';
     if (isAuthError && !isAuthPath) {
       try {
-        if (auth == null) {
+        if (auth.value == null) {
           return handler.reject(err);
         }
 
         // refresh token이 있을 경우, 새로운 access token을 요청한다.
         Dio retryDio = Dio(dioOptions);
         final respToken = await retryDio.post('/auth/login/refresh', data: {
-          'refresh_token': auth.refreshToken,
+          'refresh_token': auth.value.refreshToken,
         });
         if (respToken.data['access_token'] == null ||
             respToken.data['refresh_token'] == null) {
@@ -73,6 +82,7 @@ class CustomInterceptors extends InterceptorsWrapper {
         final response = await retryDio.fetch(options);
         return handler.resolve(response);
       } catch (e) {
+        log('Failed to refresh token $e');
         try {
           ref.read(authControllerProvider.notifier).unAuthorize();
         } catch (e) {

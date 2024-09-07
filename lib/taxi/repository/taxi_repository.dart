@@ -7,51 +7,54 @@ import '../model/taxi_model.dart';
 
 part 'taxi_repository.g.dart';
 
-@riverpod
-TaxiGroupRepository taxiGroupRepository(TaxiGroupRepositoryRef ref) {
+@Riverpod(keepAlive: true)
+TaxiRepository taxiRepository(TaxiRepositoryRef ref) {
   final dio = ref.watch(dioProvider);
-  return TaxiGroupRepository(dio, baseUrl: '/taxi');
+  return TaxiRepository(dio);
 }
 
 @RestApi()
-abstract class TaxiGroupRepository {
-  factory TaxiGroupRepository(Dio dio, {String baseUrl}) = _TaxiGroupRepository;
+abstract class TaxiRepository {
+  factory TaxiRepository(Dio dio) = _TaxiRepository;
 
-  @GET('/')
-  Future<List<TaxiGroup>> getTaxiGroups();
+  @GET('/taxi')
+  Future<List<TaxiGroup>> getTaxiGroups({
+    @Query('direction') required TaxiDirection direction,
+    @Query('depart_datetime') required DateTime departDatetime,
+  });
 
-  @GET('/{id}')
+  @GET('/taxi/{id}')
   Future<TaxiGroup> getTaxiGroup({
     @Path() required String id,
   });
 
-  @POST('/')
-  Future<TaxiGroup> createTaxiGroup({
+  @POST('/taxi')
+  Future<void> createTaxiGroup({
     @Body() required CreateTaxiGroup group,
   });
 
-  @PATCH('/{id}/{status}')
+  @PATCH('/taxi/{id}/{status}')
   Future<void> updateTaxiGroup({
     @Path() required String id,
     @Path() required String status,
   });
 
-  @POST('/{id}/member')
+  @POST('/taxi/{id}/member')
   Future<void> joinTaxiGroup({
     @Path() required String id,
   });
 
-  @DELETE('/{id}/member')
+  @DELETE('/taxi/{id}/member')
   Future<void> leaveTaxiGroup({
     @Path() required String id,
   });
 
-  @GET('/{id}/fee')
+  @GET('/taxi/{id}/fee')
   Future<TaxiTotalFee> getFee({
     @Path() required String id,
   });
 
-  @PATCH('/{id}/fee')
+  @PATCH('/taxi/{id}/fee')
   Future<void> updateFee({
     @Path() required String id,
     @Body() required TaxiTotalFee totalFee,
